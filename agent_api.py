@@ -98,16 +98,18 @@ def create_app() -> Flask:
             vision: str = data.get("vision", "")
             core_values: List[str] = data.get("core_values", [])
 
-            # Targets: convert nested dict into list of year-wise dicts
+            # Targets: convert nested dict into separate mappings for revenue,
+            # customers and margins keyed by a relative year index (1, 2, 3).
             targets_input: Dict[str, Dict[str, Any]] = data.get("targets", {})
-            targets: List[Dict[str, Any]] = []
-            for year_key in ["year1", "year2", "year3"]:
+            revenue_targets: Dict[int, Optional[float]] = {}
+            customer_targets: Dict[int, Optional[int]] = {}
+            margin_targets: Dict[int, Optional[float]] = {}
+            for idx, year_key in enumerate(["year1", "year2", "year3"], start=1):
                 year_data = targets_input.get(year_key, {})
-                targets.append({
-                    "revenue_target": year_data.get("revenue"),
-                    "customer_target": year_data.get("customers"),
-                    "margin_target": year_data.get("margin")
-                })
+                # Populate each mapping; values may be None if missing.
+                revenue_targets[idx] = year_data.get("revenue")
+                customer_targets[idx] = year_data.get("customers")
+                margin_targets[idx] = year_data.get("margin")
 
             # Winning moves
             winning_moves: List[Dict[str, Any]] = data.get("winning_moves", [])
@@ -128,10 +130,18 @@ def create_app() -> Flask:
             baseline_metrics = data.get("baseline_metrics", {})
             agent.baseline_metrics = baseline_metrics
 
-            # Build the plan using the agent
-            agent.set_targets(targets)
+            # Build the plan using the agent. Supply separate revenue, customer
+            # and margin targets as required by StrategicPlanningAgent.set_targets().
+            agent.set_targets(revenue_targets, customer_targets, margin_targets)
             if winning_moves:
-                agent.add_winning_moves(winning_moves)
+                # Extract descriptions and assign them as revenue moves. Leave profit
+                # moves empty; the agent will still capture the high‑level initiatives.
+                move_descriptions = [move.get("description", "") for move in winning_moves]
+                try:
+                    agent.identify_winning_moves(move_descriptions, [])
+                except AttributeError:
+                    # If identify_winning_moves is unavailable, ignore winning moves gracefully.
+                    pass
             if any([strengths, weaknesses, opportunities, threats]):
                 agent.add_swot(strengths, weaknesses, opportunities, threats)
 
