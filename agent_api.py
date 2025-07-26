@@ -40,7 +40,16 @@ def create_app() -> Flask:
     # access the API without running into cross‑origin restrictions.
     CORS(app)
 
-    agent = StrategicPlanningAgent()
+    # Instantiate the planning agent with placeholder values. The actual
+    # company-specific data (name, mission, vision, core values and baseline
+    # metrics) will be supplied from the JSON payload in each request.
+    agent = StrategicPlanningAgent(
+        company_name="",
+        mission="",
+        vision="",
+        core_values=[],
+        baseline_metrics={},
+    )
 
     @app.route("/generate_plan", methods=["POST"])
     def generate_plan() -> Any:
@@ -109,6 +118,15 @@ def create_app() -> Flask:
             weaknesses = swot.get("weaknesses", [])
             opportunities = swot.get("opportunities", [])
             threats = swot.get("threats", [])
+
+            # Update agent attributes with current company data
+            agent.company_name = company_name
+            agent.mission = mission
+            agent.vision = vision
+            agent.core_values = core_values
+            # Use baseline metrics from input if provided, else empty dict
+            baseline_metrics = data.get("baseline_metrics", {})
+            agent.baseline_metrics = baseline_metrics
 
             # Build the plan using the agent
             agent.set_targets(targets)
