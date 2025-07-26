@@ -153,10 +153,17 @@ def create_app() -> Flask:
                     # ignore if the method is unavailable.
                     pass
 
-            plan = agent.assemble_plan(company_name)
+            # Build the strategic plan using the agent's method.  The
+            # StrategicPlanningAgent class defines ``build_plan()`` to
+            # assemble all plan components into a dictionary.  The older
+            # name ``assemble_plan`` does not exist, so call ``build_plan``.
+            plan = agent.build_plan()
 
-            # Generate narrative
-            narrative = agent.generate_narrative(plan)
+            # Generate narrative without passing the plan.  The agent's
+            # ``generate_narrative`` method uses the current state of the
+            # agent to construct the narrative and does not accept a plan
+            # argument.
+            narrative = agent.generate_narrative()
 
             return jsonify({
                 "plan": plan,
