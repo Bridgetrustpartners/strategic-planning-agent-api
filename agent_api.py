@@ -132,8 +132,13 @@ def create_app() -> Flask:
 
     return app
 
+# Create the Flask application at module level. This allows
+# Gunicorn or other WSGI servers to import the `app` object directly
+# (e.g. via ``gunicorn agent_api:app``) without invoking the factory.
+app = create_app()
+
 
 if __name__ == "__main__":
     # Only run the server if this script is executed directly.
-    app = create_app()
+    # The global ``app`` defined above is used by WSGI servers like Gunicorn.
     app.run(host="0.0.0.0", port=5000, debug=True)
