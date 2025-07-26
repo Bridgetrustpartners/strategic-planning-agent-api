@@ -1,1 +1,1 @@
-web: gunicorn agent_api:create_app()
+web: gunicorn 'agent_api:create_app()'
