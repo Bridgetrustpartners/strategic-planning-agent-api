@@ -143,7 +143,15 @@ def create_app() -> Flask:
                     # If identify_winning_moves is unavailable, ignore winning moves gracefully.
                     pass
             if any([strengths, weaknesses, opportunities, threats]):
-                agent.add_swot(strengths, weaknesses, opportunities, threats)
+                # Use the correct method name from StrategicPlanningAgent. The
+                # planning_agent module defines ``create_swot`` (not ``add_swot``),
+                # which sets the SWOT analysis on the agent and returns it.
+                try:
+                    agent.create_swot(strengths, weaknesses, opportunities, threats)
+                except AttributeError:
+                    # Fallback for older versions where the method might be named differently;
+                    # ignore if the method is unavailable.
+                    pass
 
             plan = agent.assemble_plan(company_name)
 
